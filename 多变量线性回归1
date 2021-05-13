@@ -1,0 +1,69 @@
+
+# 开发时间 ；2021/5/13 0013 13:24
+#房价预测
+
+#加载库
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+#加载数据集
+#第一列是房子的大小（平方英尺），第二列是卧室的数量，第三列是房子的价格。
+data=pd.read_csv('F:\\ML\\线性回归\\数据文件\\ex1data2.txt',names=['size','num_bedroom','price'],header=None)
+#print(data.head(5))
+'''
+   size  num_bedroom   price
+0  2104            3  399900
+1  1600            3  329900
+2  2400            3  369000
+3  1416            2  232000
+4  3000            4  539900
+'''
+
+
+#归一化处理
+'''
+特征缩放/归一化
+对于多特征的机器学习问题，如果这些特征的取值在相近的范围内，则梯度下降法就能更快的收敛。
+例如，考虑取值范围相差较大的两个特征的情况，损失函数等值线将呈现出扁椭圆形，相差倍数越大，椭圆越扁。
+在这样的等值线上运行梯度下降，需要花很长一段时间，并可能来回波动，最终收敛到全局小值。
+改善这一状况的有效做法是特征缩放，使两个特征的取值范围靠近。此时损失函数等值线更接近圆，
+从数学上可以证明，梯度下降会找到一条更直接的路径（迭代次数减少）通向全局最小值。
+常用方法：除最大值，均值归一化等。
+
+在此实例中，房子的大小大约是卧室数量的1000倍。当特征有不同的数量级时，首先执行特征缩放可以使梯度下降收敛得更快。
+'''
+data=(data-data.mean())/data.std()
+#print(data.head(5))
+'''
+       size  num_bedroom     price
+0  0.130010    -0.223675  0.475747
+1 -0.504190    -0.223675 -0.084074
+2  0.502476    -0.223675  0.228626
+3 -0.735723    -1.537767 -0.867025
+4  1.257476     1.090417  1.595389
+'''
+data.insert(0,'Ones',1) # 就是在第一列[0] 添加名字为Ones的一列数据，数值都是1
+X=data.iloc[:,:-1]#所有行，不取倒数第一列
+# y=data.iloc[:,3:4]
+y=data.iloc[:,-1]
+theta=np.zeros(X.shape[1])
+m=len(X)
+alpha=0.01
+#代价函数
+
+def Cost_function(X,y,theta):
+    inner=(np.dot(X,theta)-y)**2
+    return np.sum(inner)/2*m
+
+#梯度下降
+def gradient(X,y,theta):
+    for i in range(1000):
+        theta=theta-(alpha/m)*np.dot(X.T,(np.dot(X,theta)-y))
+    return theta
+
+theta=gradient(X,y,theta)
+print(theta)
+
+
+
