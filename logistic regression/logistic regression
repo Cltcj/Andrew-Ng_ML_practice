@@ -1,0 +1,115 @@
+# 姓名 ： 池吕庭
+# 开发时间 ；2021/5/14 0014 9:24
+
+#建立一个逻辑回归模型来预测一个学生是否被大学录取
+# 假设作为一所大学系的管理者，要根据每一位申请人在两次考试中的成绩来确定他们的入学机会。这里有前几年的历史数据
+# 可以将其用作逻辑回归的培训集。对于每个培训示例，都有申请者在两次考试中的分数和招生决定。
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import scipy.optimize as opt
+plt.style.use('seaborn-darkgrid')
+from sklearn.metrics import classification_report#这个包是评价报告
+
+path='F:/ML/logistics回归/数据文件/ex2data1.txt'
+data=pd.read_csv(path,header=None,names=['exam1','exam2','admitted'])
+# print(data.head(5))
+
+plt.figure(figsize=(16,9))
+admit=data[data['admitted'].isin([1])]
+n_admit=data[data['admitted'].isin([0])]
+# print(admit)
+# print(n_admit)
+plt.scatter(admit['exam1'],admit['exam2'],c='black',marker='+',label='admitted')
+plt.scatter(n_admit['exam1'],n_admit['exam2'],c='y',marker='o',label='Not admitted')
+plt.xlabel('Exam1_score')
+plt.ylabel('Exam2_score')
+plt.show()
+
+
+#逻辑函数
+def sigmoid(z):
+    return 1/(1+np.exp(-z))
+fig, ax = plt.subplots(figsize=(8, 6))
+ax.plot(np.arange(-10, 10, step=0.01),
+        sigmoid(np.arange(-10, 10, step=0.01)))
+ax.set_ylim((-0.1,1.1))
+ax.set_xlabel('z', fontsize=18)
+ax.set_ylabel('g(z)', fontsize=18)
+ax.set_title('sigmoid function', fontsize=18)
+plt.show()
+
+
+#theta数据处理
+data.insert(0,'Ones',1)
+# print(data)
+
+X=np.array(data.iloc[:,:-1])
+y=np.array(data.iloc[:,-1])
+theta=np.zeros(X.shape[1])
+print(X.shape)
+print(y.shape)
+print(theta.shape)
+# print(cost_fun(X,y,theta))
+
+#代价函数
+def cost_fun(theta,X,y):
+    # m=X.shape[0]
+    #
+    # inner_1=-y*np.log(sigmoid(np.dot(X,theta)))
+    # inner_2=-(1-y)*np.log(1-sigmoid(np.dot(X,theta)))
+    # J_cost=np.sum(inner_1+inner_2)/m
+    # return J_cost
+    ''' cost fn is -l(theta) for you to minimize'''
+    return np.mean(-y * np.log(sigmoid(X @ theta)) - (1 - y) * np.log(1 - sigmoid(X @ theta)))
+
+
+
+
+#梯度下降
+def gradient(theta,X,y):
+    m=X.shape[0]
+    # return (1 / len(X)) * X.T @ (sigmoid(X @ theta) - y)
+    return np.dot(X.T,sigmoid(np.dot(X,theta))-y)/m
+print(gradient(theta,X,y))
+
+# 使用fimin_tnc或者minimize方法来拟合,学习参数θ
+result = opt.fmin_tnc(func=cost_fun, x0=theta, fprime=gradient, args=(X, y))
+print(result)
+print(result[0])
+
+# 假设函数，预测函数
+def predict(theta,X):
+    probability=sigmoid(X.dot(theta))
+    return [1 if x>=0.5 else 0 for x in probability ]
+
+
+final_theta = result[0]
+print(result)
+print(result[0])
+predictions = predict(final_theta, X)
+correct = [1 if a==b else 0 for (a, b) in zip(predictions, y)]
+accuracy = sum(correct) / len(X)
+print(accuracy)
+
+# 用skearn中的方法来检验。
+from sklearn.metrics import classification_report
+print(classification_report(predictions, y))
+
+#决策边界
+#线性theta*X=0
+#有theta[0]+theta[1]*x1+theta[2]*x2=0
+x1=np.arange(130,step=0.1)
+x2=-(final_theta[0]+x1*final_theta[1])/final_theta[2]
+fig ,ax=plt.subplots(figsize=(8,5))
+ax.scatter(admit['exam1'],admit['exam2'],c='b',label='Admitted')
+ax.scatter(n_admit['exam1'],n_admit['exam2'],s=50,c='r',marker='x',label='Not Admitted')
+ax.plot(x1,x2)
+ax.set_xlim(0, 130)
+ax.set_ylim(0, 130)
+ax.set_xlabel('x1')
+ax.set_ylabel('x2')
+ax.set_title('Decision Boundary')
+plt.show()
+
